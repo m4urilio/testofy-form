@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Testofy Protocol — Free ED Assessment</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange-primary: #F97316;
+      --orange-dark:    #EA580C;
+      --orange-deeper:  #C2410C;
+      --orange-light:   #FFF7ED;
+      --orange-mid:     #FED7AA;
+      --grey-100:       #F9FAFB;
+      --grey-200:       #E5E7EB;
+      --grey-400:       #9CA3AF;
+      --grey-600:       #6B7280;
+      --grey-800:       #1F2937;
+      --white:          #FFFFFF;
+      --radius:         14px;
+      --shadow:         0 4px 28px rgba(249,115,22,.13);
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--grey-100);
+      color: var(--grey-800);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      width: 100%;
+      background: var(--white);
+      border-bottom: 1px solid var(--grey-200);
+      display: flex;
+      justify-content: center;
+      padding: 18px 24px;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .logo-icon {
+      width: 38px; height: 38px;
+      background: var(--orange-primary);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logo-icon svg { width: 22px; height: 22px; fill: white; }
+    .logo-text { font-size: 1.2rem; font-weight: 800; color: var(--grey-800); letter-spacing: -.5px; }
+    .logo-text span { color: var(--orange-primary); }
+
+    /* ── WRAPPER ── */
+    .wrapper {
+      width: 100%; max-width: 660px;
+      padding: 32px 16px 60px;
+      display: flex; flex-direction: column; align-items: center; gap: 0;
+    }
+
+    /* ── PROGRESS ── */
+    .progress-area {
+      width: 100%; margin-bottom: 20px;
+    }
+    .progress-meta {
+      display: flex; justify-content: space-between;
+      font-size: .8rem; font-weight: 600; color: var(--grey-400);
+      margin-bottom: 8px;
+    }
+    .progress-bar-bg {
+      width: 100%; height: 8px;
+      background: var(--grey-200); border-radius: 99px; overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%; background: var(--orange-primary);
+      border-radius: 99px;
+      transition: width .5s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ── GO BACK ── */
+    .back-btn {
+      width: 100%; display: flex; align-items: center; gap: 5px;
+      background: none; border: none; cursor: pointer;
+      color: var(--grey-400); font-size: .8rem; font-weight: 600;
+      font-family: inherit; padding: 0 0 12px 0;
+      transition: color .2s;
+    }
+    .back-btn:hover { color: var(--grey-600); }
+    .back-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+    .back-btn.hidden { visibility: hidden; pointer-events: none; }
+
+    /* ── CARD ── */
+    .card {
+      width: 100%;
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 36px 32px;
+      animation: fadeUp .35s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .question-label {
+      font-size: .72rem; font-weight: 700;
+      color: var(--orange-primary); letter-spacing: .09em;
+      text-transform: uppercase; margin-bottom: 10px;
+    }
+    .question-text {
+      font-size: 1.22rem; font-weight: 700;
+      color: var(--grey-800); line-height: 1.45;
+      margin-bottom: 26px;
+    }
+
+    /* ── OPTIONS ── */
+    .options { display: flex; flex-direction: column; gap: 11px; }
+
+    .option {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 18px;
+      border: 2px solid var(--grey-200);
+      border-radius: 10px;
+      cursor: pointer;
+      background: var(--white);
+      transition: border-color .18s, background .18s, transform .14s;
+      font-size: .94rem; font-weight: 500; color: var(--grey-800);
+      text-align: left; width: 100%; font-family: 'Playfair Display', Georgia, serif;
+    }
+    .option:hover {
+      border-color: var(--orange-primary);
+      background: var(--orange-light);
+      transform: translateX(3px);
+    }
+    .option.selected {
+      border-color: var(--orange-primary);
+      background: var(--orange-light);
+    }
+    .option-bullet {
+      width: 21px; height: 21px; min-width: 21px;
+      border-radius: 50%;
+      border: 2px solid var(--grey-400);
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color .18s, background .18s;
+      flex-shrink: 0;
+    }
+    .option.selected .option-bullet {
+      border-color: var(--orange-primary);
+      background: var(--orange-primary);
+    }
+    .option.selected .option-bullet::after {
+      content: '';
+      width: 7px; height: 7px;
+      background: white; border-radius: 50%;
+    }
+
+    /* ── YES/NO ── */
+    .yn-options { display: flex; gap: 14px; }
+    .yn-btn {
+      flex: 1; padding: 22px 10px;
+      border-radius: 12px; border: 2.5px solid var(--grey-200);
+      background: var(--white); cursor: pointer;
+      font-size: 1rem; font-weight: 700; font-family: inherit;
+      transition: all .2s;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      color: var(--grey-800);
+    }
+    .yn-btn .yn-icon { font-size: 1.8rem; }
+    .yn-btn.yes:hover, .yn-btn.yes.selected {
+      border-color: var(--orange-primary); background: var(--orange-light);
+      color: var(--orange-dark);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 22px rgba(249,115,22,.20);
+    }
+    .yn-btn.no:hover, .yn-btn.no.selected {
+      border-color: var(--grey-400); background: var(--grey-100);
+      color: var(--grey-600);
+    }
+
+    /* ── INTERMEDIATE MESSAGE ── */
+    .mid-card {
+      width: 100%;
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 40px 32px;
+      text-align: center;
+      animation: fadeUp .45s ease both;
+    }
+    .mid-icon {
+      width: 72px; height: 72px;
+      background: var(--orange-light);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 2.2rem;
+    }
+    .mid-badge {
+      display: inline-block;
+      background: #FFEDD5; color: var(--orange-dark);
+      font-size: .76rem; font-weight: 700;
+      padding: 4px 12px; border-radius: 99px;
+      letter-spacing: .07em; text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .mid-title {
+      font-size: 1.5rem; font-weight: 800;
+      color: var(--grey-800); line-height: 1.35;
+      margin-bottom: 14px;
+    }
+    .mid-title span { color: var(--orange-primary); }
+    .mid-body {
+      font-size: .96rem; color: var(--grey-600);
+      line-height: 1.68; margin-bottom: 24px;
+    }
+    .mid-highlights {
+      display: flex; flex-direction: column; gap: 10px;
+      background: var(--grey-100); border-radius: 10px;
+      padding: 18px 20px; margin-bottom: 28px; text-align: left;
+    }
+    .mid-highlight-item {
+      display: flex; align-items: center; gap: 10px;
+      font-size: .88rem; font-weight: 500; color: var(--grey-800);
+    }
+    .mid-highlight-item .dot {
+      width: 8px; height: 8px; min-width: 8px;
+      background: var(--orange-primary); border-radius: 50%;
+    }
+    .btn-continue {
+      width: 100%; padding: 16px;
+      background: var(--orange-primary); color: white;
+      font-size: 1rem; font-weight: 700; font-family: inherit;
+      border: none; border-radius: 10px; cursor: pointer;
+      transition: background .2s, transform .15s, box-shadow .2s;
+    }
+    .btn-continue:hover {
+      background: var(--orange-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(249,115,22,.30);
+    }
+
+    /* ── FINAL RESULT ── */
+    .result-card {
+      width: 100%;
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 40px 32px;
+      text-align: center;
+      animation: fadeUp .45s ease both;
+    }
+    .result-icon { font-size: 3rem; margin-bottom: 16px; }
+    .result-badge {
+      display: inline-block;
+      background: #FFEDD5; color: var(--orange-dark);
+      font-size: .76rem; font-weight: 700;
+      padding: 4px 14px; border-radius: 99px;
+      letter-spacing: .07em; text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    .result-title {
+      font-size: 1.5rem; font-weight: 800;
+      color: var(--grey-800); line-height: 1.35; margin-bottom: 14px;
+    }
+    .result-title span { color: var(--orange-primary); }
+    .result-body {
+      font-size: .94rem; color: var(--grey-600);
+      line-height: 1.72; margin-bottom: 26px;
+    }
+    .result-features {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 12px; margin-bottom: 28px;
+    }
+    .result-feature {
+      background: var(--orange-light);
+      border-radius: 10px; padding: 14px 12px;
+      font-size: .83rem; font-weight: 600; color: var(--orange-dark);
+      text-align: center;
+    }
+    .result-feature .f-icon { font-size: 1.3rem; display: block; margin-bottom: 4px; }
+    .btn-cta {
+      width: 100%; padding: 18px;
+      background: var(--orange-primary); color: white;
+      font-size: 1.05rem; font-weight: 800; font-family: inherit;
+      border: none; border-radius: 10px; cursor: pointer;
+      transition: background .2s, transform .15s, box-shadow .2s;
+    }
+    .btn-cta:hover {
+      background: var(--orange-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(249,115,22,.35);
+    }
+    .cta-sub {
+      font-size: .79rem; color: var(--grey-400);
+      margin-top: 12px;
+    }
+
+    /* ── TRUST BAR ── */
+    .trust-bar {
+      width: 100%; max-width: 660px;
+      padding: 0 16px;
+      display: flex; justify-content: center; gap: 24px;
+      flex-wrap: wrap; margin-top: 24px;
+    }
+    .trust-item {
+      display: flex; align-items: center; gap: 6px;
+      font-size: .77rem; color: var(--grey-400); font-weight: 500;
+    }
+    .trust-item svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 480px) {
+      .card, .mid-card, .result-card { padding: 26px 18px; }
+      .question-text { font-size: 1.08rem; }
+      .result-features { grid-template-columns: 1fr; }
+      .yn-options { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <a class="logo" href="#">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2a5 5 0 1 1 0 10A5 5 0 0 1 12 2zm0 12c-4.42 0-8 1.79-8 4v2h16v-2c0-2.21-3.58-4-8-4z"/>
+        </svg>
+      </div>
+      <span class="logo-text">Testofy <span>Protocol</span></span>
+    </a>
+  </header>
+
+  <!-- MAIN -->
+  <main class="wrapper">
+    <div class="progress-area" id="progressArea">
+      <button class="back-btn hidden" id="backBtn" onclick="goBack()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        Go back
+      </button>
+      <div class="progress-meta">
+        <span id="progressLabel">Question 1 of 13</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div id="quizContainer"></div>
+  </main>
+
+  <!-- TRUST BAR -->
+  <div class="trust-bar">
+    <div class="trust-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+      100% safe &amp; free
+    </div>
+    <div class="trust-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+      Your answers are private
+    </div>
+    <div class="trust-item">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Takes less than 2 minutes
+    </div>
+  </div>
+
+  <script>
+    const QUESTIONS = [
+      {
+        id: 1, type: 'choice',
+        text: 'What is your age range?',
+        options: ['18 to 29 years old', '30 to 39 years old', '40 to 49 years old', '50 years or older'],
+      },
+      {
+        id: 2, type: 'choice',
+        text: 'How long have you been experiencing difficulty getting or maintaining an erection?',
+        options: ['Less than 6 months', 'Between 6 months and 1 year', 'Between 1 and 3 years', 'More than 3 years'],
+      },
+      {
+        id: 3, type: 'choice',
+        text: 'How would you describe the severity of your erectile difficulties?',
+        options: [
+          'Mild — occasional difficulty',
+          'Moderate — difficulty in about half of attempts',
+          'Severe — rarely able to achieve an erection',
+          'Complete — unable to achieve an erection',
+        ],
+      },
+      {
+        id: 4, type: 'choice',
+        text: 'How often do you experience difficulty getting or maintaining an erection?',
+        options: ['Rarely (less than 25% of the time)', 'Sometimes (about 50% of the time)', 'Often (75% or more of the time)', 'Always (nearly 100% of the time)'],
+      },
+      {
+        id: 5, type: 'choice',
+        text: 'Has erectile dysfunction affected your self-esteem, confidence or relationship?',
+        options: [
+          'Yes, it has greatly impacted my life and relationship',
+          'Sometimes it causes anxiety and tension',
+          'Rarely, but I have noticed some impact',
+          'Not yet, but I want to act before it gets worse',
+        ],
+      },
+      {
+        id: 6, type: 'choice',
+        text: 'Do you have any of the following associated conditions?',
+        options: ['Diabetes or high blood sugar', 'High blood pressure or cardiovascular issues', 'Chronic stress, anxiety or depression', 'None of the above'],
+      },
+      {
+        id: 7, type: 'choice',
+        text: 'Have you tried any treatment for erectile dysfunction before?',
+        options: [
+          'Yes, but without satisfactory results',
+          'Yes, but I stopped due to side effects',
+          'Yes, with some partial results',
+          'I have never tried any treatment',
+        ],
+      },
+      {
+        id: 8, type: 'choice',
+        text: 'Do you notice a significant drop in sexual desire or libido along with the erection difficulties?',
+        options: [
+          'Yes, my libido has dropped significantly',
+          'Yes, but only moderately',
+          'Rarely',
+          'No, my desire is normal but erection is the issue',
+        ],
+      },
+      {
+        id: 9, type: 'choice',
+        text: 'How is your sexual performance today compared to 2–3 years ago?',
+        options: ['Much worse — significant decline in performance', 'Somewhat worse — noticeable but manageable', 'About the same', 'I have just started noticing changes recently'],
+      },
+      {
+        id: 10, type: 'choice',
+        text: 'Would you be willing to follow a simple daily routine with a 100% natural method and no side effects?',
+        options: [
+          'Yes, absolutely — I am ready to start now',
+          'Depends on how much time it requires',
+          'Maybe, if it is easy to follow',
+          'I would prefer a faster solution',
+        ],
+      },
+      {
+        id: 11, type: 'yesno',
+        text: 'Would you like to have access to a natural treatment that can help restore your erectile function in as little as 3 weeks?',
+      },
+      {
+        id: 12, type: 'yesno',
+        text: 'If there was a proven natural method to fully recover your sexual performance within 21 days, would you be interested in learning about it?',
+      },
+      {
+        id: 13, type: 'yesno',
+        text: 'Would you like to get access to the full Testofy Protocol and start recovering your performance this very week?',
+      },
+    ];
+
+    const INTERMEDIATE_AFTER = 7;
+
+    let currentStep = 0;
+    let stepHistory = [];
+    let showingMid  = false;
+    let answers     = {};
+    let advancing   = false;
+
+    const container    = document.getElementById('quizContainer');
+    const progressArea = document.getElementById('progressArea');
+    const progressFill = document.getElementById('progressFill');
+    const progressLabel= document.getElementById('progressLabel');
+    const progressPct  = document.getElementById('progressPct');
+    const backBtn      = document.getElementById('backBtn');
+
+    function updateProgress(qNumber) {
+      const pct = Math.round(((qNumber - 1) / QUESTIONS.length) * 100);
+      progressFill.style.width = pct + '%';
+      progressLabel.textContent = 'Question ' + qNumber + ' of ' + QUESTIONS.length;
+      progressPct.textContent   = pct + '%';
+    }
+
+    function showBack(visible) {
+      backBtn.classList.toggle('hidden', !visible);
+    }
+
+    function renderQuestion(index) {
+      if (index < 0) return;
+      const q = QUESTIONS[index];
+      updateProgress(q.id);
+      showBack(stepHistory.length > 0);
+      advancing = false;
+
+      if (q.type === 'choice') {
+        container.innerHTML = `
+          <div class="card">
+            <div class="question-label">Question ${q.id} of ${QUESTIONS.length}</div>
+            <div class="question-text">${q.text}</div>
+            <div class="options" id="options"></div>
+          </div>`;
+
+        const opts = document.getElementById('options');
+        q.options.forEach((opt, i) => {
+          const btn = document.createElement('button');
+          btn.className = 'option';
+          btn.innerHTML = `<div class="option-bullet"></div><span>${opt}</span>`;
+          btn.onclick = () => selectAndAdvance(btn, i, q.id);
+          opts.appendChild(btn);
+        });
+
+        if (answers[q.id] !== undefined) {
+          const allOpts = document.querySelectorAll('.option');
+          if (allOpts[answers[q.id]]) allOpts[answers[q.id]].classList.add('selected');
+        }
+      } else {
+        container.innerHTML = `
+          <div class="card">
+            <div class="question-label">Question ${q.id} of ${QUESTIONS.length}</div>
+            <div class="question-text">${q.text}</div>
+            <div class="yn-options">
+              <button class="yn-btn yes" onclick="handleYesNo('yes', ${q.id})">
+                <span class="yn-icon">&#x1F44D;</span>
+                Yes, I want that!
+              </button>
+              <button class="yn-btn no" onclick="handleYesNo('no', ${q.id})">
+                <span class="yn-icon">&#x274C;</span>
+                No
+              </button>
+            </div>
+          </div>`;
+      }
+    }
+
+    function selectAndAdvance(btn, idx, qId) {
+      if (advancing) return;
+      advancing = true;
+
+      document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+      btn.classList.add('selected');
+      answers[qId] = idx;
+
+      setTimeout(() => {
+        stepHistory.push({ step: currentStep, wasMid: false });
+        currentStep++;
+        if (currentStep === INTERMEDIATE_AFTER) {
+          showMidMessage();
+        } else {
+          renderQuestion(currentStep);
+        }
+      }, 320);
+    }
+
+    function handleYesNo(val, qId) {
+      if (advancing) return;
+      advancing = true;
+      answers[qId] = val;
+
+      const btn = document.querySelector('.yn-btn.' + (val === 'yes' ? 'yes' : 'no'));
+      if (btn) btn.classList.add('selected');
+
+      setTimeout(() => {
+        stepHistory.push({ step: currentStep, wasMid: false });
+        currentStep++;
+        if (currentStep >= QUESTIONS.length) {
+          showResult();
+        } else {
+          renderQuestion(currentStep);
+        }
+      }, 300);
+    }
+
+    function showMidMessage() {
+      progressArea.style.display = 'none';
+      showBack(false);
+      advancing = false;
+      container.innerHTML = `
+        <div class="mid-card">
+          <div class="mid-icon">&#x26A1;</div>
+          <div class="mid-badge">Analysis Almost Complete</div>
+          <div class="mid-title">Your situation <span>can be reversed!</span></div>
+          <p class="mid-body">
+            Based on your answers, your profile is highly compatible with natural recovery
+            of erectile function. The good news — this type of dysfunction can often be
+            resolved at the root cause with the right approach, even if previous attempts
+            have failed.
+          </p>
+          <div class="mid-highlights">
+            <div class="mid-highlight-item"><div class="dot"></div>Erectile dysfunction with an identifiable and treatable cause</div>
+            <div class="mid-highlight-item"><div class="dot"></div>Profile compatible with fast hormonal and vascular recovery</div>
+            <div class="mid-highlight-item"><div class="dot"></div>High chance of visible results within 3 weeks</div>
+          </div>
+          <button class="btn-continue" onclick="continueMid()">Continue &rarr;</button>
+        </div>`;
+    }
+
+    function continueMid() {
+      stepHistory.push({ step: null, wasMid: true });
+      progressArea.style.display = 'block';
+      renderQuestion(currentStep);
+    }
+
+    function goBack() {
+      if (stepHistory.length === 0) return;
+      const prev = stepHistory.pop();
+
+      if (prev.wasMid) {
+        currentStep = INTERMEDIATE_AFTER;
+        progressArea.style.display = 'none';
+        showBack(false);
+        advancing = false;
+        container.innerHTML = `
+          <div class="mid-card">
+            <div class="mid-icon">&#x26A1;</div>
+            <div class="mid-badge">Analysis Almost Complete</div>
+            <div class="mid-title">Your situation <span>can be reversed!</span></div>
+            <p class="mid-body">
+              Based on your answers, your profile is highly compatible with natural recovery
+              of erectile function. The good news — this type of dysfunction can often be
+              resolved at the root cause with the right approach, even if previous attempts
+              have failed.
+            </p>
+            <div class="mid-highlights">
+              <div class="mid-highlight-item"><div class="dot"></div>Erectile dysfunction with an identifiable and treatable cause</div>
+              <div class="mid-highlight-item"><div class="dot"></div>Profile compatible with fast hormonal and vascular recovery</div>
+              <div class="mid-highlight-item"><div class="dot"></div>High chance of visible results within 3 weeks</div>
+            </div>
+            <button class="btn-continue" onclick="continueMid()">Continue &rarr;</button>
+          </div>`;
+        return;
+      }
+
+      currentStep = prev.step;
+      progressArea.style.display = 'block';
+      renderQuestion(currentStep);
+    }
+
+    function showResult() {
+      progressArea.style.display = 'none';
+      showBack(false);
+      container.innerHTML = `
+        <div class="result-card">
+          <div class="result-icon">&#x1F3C6;</div>
+          <div class="result-badge">You Are an Ideal Candidate</div>
+          <div class="result-title">Your performance <span>can be fully restored</span> in as little as 3 weeks</div>
+          <p class="result-body">
+            Congratulations on completing the assessment! Based on your profile, the Testofy Protocol
+            is designed to reactivate your body's natural testosterone production, improve blood flow,
+            and restore erectile function at the root. Our method is 100% natural, with no side effects
+            — and most users report visible results in under 30 days.
+          </p>
+          <div class="result-features">
+            <div class="result-feature"><span class="f-icon">&#x1F33F;</span>100% Natural</div>
+            <div class="result-feature"><span class="f-icon">&#x23F1;</span>Results in 3 weeks</div>
+            <div class="result-feature"><span class="f-icon">&#x1F525;</span>Boosts Testosterone</div>
+            <div class="result-feature"><span class="f-icon">&#x2705;</span>No side effects</div>
+          </div>
+          <button class="btn-cta" onclick="handleCTA()">
+            Get the full Testofy Protocol now &rarr;
+          </button>
+          <p class="cta-sub">Limited access &bull; Secure checkout &bull; Results in 3 weeks</p>
+        </div>`;
+    }
+
+    function handleCTA() {
+      window.location.href = 'https://pay.hotmart.com/B104929784U?checkoutMode=10';
+    }
+
+    // ── INIT ──
+    renderQuestion(0);
+  </script>
+</body>
+</html>
