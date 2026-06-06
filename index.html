@@ -379,311 +379,525 @@
   </div>
 
   <script>
-    const QUESTIONS = [
-      {
-        id: 1, type: 'choice',
+    // ─────────────────────────────────────────────
+    //  TESTOFY — ADAPTIVE QUIZ ENGINE
+    //  Branching by age, associated conditions,
+    //  libido, severity and treatment history.
+    // ─────────────────────────────────────────────
+
+    var TOTAL_Q  = 13;
+    var CHECKOUT = 'https://pay.hotmart.com/B104929784U?checkoutMode=10';
+
+    // A[qId] key map:
+    // q1  = age        (0=18-29, 1=30-39, 2=40-49, 3=50+)
+    // q2  = duration   (0=<6mo,  1=6-12mo, 2=1-3yr, 3=3yr+)
+    // q3  = severity   (0=mild,  1=moderate, 2=severe, 3=complete)
+    // q4  = frequency  (0=rarely,1=sometimes,2=often,3=always)
+    // q5  = impact     (0=greatly,1=anxiety,2=rarely,3=not yet)
+    // q6  = condition  (0=diabetes,1=BP/cardio,2=stress/anxiety,3=none)
+    // q7a/q7b/q7c = branched
+    // q8  = libido     (0=significant drop,1=moderate,2=rarely,3=normal)
+    // q9  = comparison (0=much worse,1=somewhat worse,2=same,3=just started)
+    // q10 = prev treat (0=no results,1=side effects,2=partial,3=never)
+    // q11/q12/q13 = yesno (0=yes, 1=no)
+
+    var A        = {};
+    var qHistory = [];
+    var currentQId = 'q1';
+    var advancing  = false;
+
+    // ── helpers ──
+    function age()    { return A.q1 !== undefined ? A.q1 : 1; }
+    function dur()    { return A.q2 !== undefined ? A.q2 : 0; }
+    function sev()    { return A.q3 !== undefined ? A.q3 : 1; }
+    function freq()   { return A.q4 !== undefined ? A.q4 : 1; }
+    function impact() { return A.q5 !== undefined ? A.q5 : 2; }
+    function cond()   { return A.q6 !== undefined ? A.q6 : 3; }
+    function prev()   { return A.q10 !== undefined ? A.q10 : 3; }
+
+    function isYoung()      { return age() === 0; }           // 18-29
+    function isSenior()     { return age() >= 2; }            // 40+
+    function hasPhysical()  { return cond() === 0 || cond() === 1; }
+    function hasStress()    { return cond() === 2; }
+    function noConditions() { return cond() === 3; }
+
+    // ── question map ──
+    var Q = {
+
+      // ── Q1 — Age (anchor for everything) ──
+      q1: {
         text: 'What is your age range?',
-        options: ['18 to 29 years old', '30 to 39 years old', '40 to 49 years old', '50 years or older'],
+        type: 'choice',
+        options: ['18–29 years old', '30–39 years old', '40–49 years old', '50 years or older'],
+        next: function() { return 'q2'; }
       },
-      {
-        id: 2, type: 'choice',
+
+      // ── Q2 — Duration ──
+      q2: {
         text: 'How long have you been experiencing difficulty getting or maintaining an erection?',
-        options: ['Less than 6 months', 'Between 6 months and 1 year', 'Between 1 and 3 years', 'More than 3 years'],
+        type: 'choice',
+        options: ['Less than 6 months', '6 months to 1 year', '1 to 3 years', 'More than 3 years'],
+        next: function() { return 'q3'; }
       },
-      {
-        id: 3, type: 'choice',
-        text: 'How would you describe the severity of your erectile difficulties?',
+
+      // ── Q3 — Severity (adaptive if long duration) ──
+      q3: {
+        text: function() {
+          return dur() >= 2
+            ? "Given how long you've been dealing with this — how would you describe the severity today?"
+            : 'How would you describe the severity of your erectile difficulties?';
+        },
+        type: 'choice',
         options: [
-          'Mild — occasional difficulty',
+          'Mild — occasional difficulty, mostly able to perform',
           'Moderate — difficulty in about half of attempts',
-          'Severe — rarely able to achieve an erection',
-          'Complete — unable to achieve an erection',
+          'Severe — rarely able to achieve a full erection',
+          'Complete — unable to achieve an erection'
         ],
+        next: function() { return 'q4'; }
       },
-      {
-        id: 4, type: 'choice',
-        text: 'How often do you experience difficulty getting or maintaining an erection?',
-        options: ['Rarely (less than 25% of the time)', 'Sometimes (about 50% of the time)', 'Often (75% or more of the time)', 'Always (nearly 100% of the time)'],
-      },
-      {
-        id: 5, type: 'choice',
-        text: 'Has erectile dysfunction affected your self-esteem, confidence or relationship?',
-        options: [
-          'Yes, it has greatly impacted my life and relationship',
-          'Sometimes it causes anxiety and tension',
-          'Rarely, but I have noticed some impact',
-          'Not yet, but I want to act before it gets worse',
-        ],
-      },
-      {
-        id: 6, type: 'choice',
-        text: 'Do you have any of the following associated conditions?',
-        options: ['Diabetes or high blood sugar', 'High blood pressure or cardiovascular issues', 'Chronic stress, anxiety or depression', 'None of the above'],
-      },
-      {
-        id: 7, type: 'choice',
-        text: 'Have you tried any treatment for erectile dysfunction before?',
-        options: [
-          'Yes, but without satisfactory results',
-          'Yes, but I stopped due to side effects',
-          'Yes, with some partial results',
-          'I have never tried any treatment',
-        ],
-      },
-      {
-        id: 8, type: 'choice',
-        text: 'Do you notice a significant drop in sexual desire or libido along with the erection difficulties?',
-        options: [
-          'Yes, my libido has dropped significantly',
-          'Yes, but only moderately',
-          'Rarely',
-          'No, my desire is normal but erection is the issue',
-        ],
-      },
-      {
-        id: 9, type: 'choice',
-        text: 'How is your sexual performance today compared to 2–3 years ago?',
-        options: ['Much worse — significant decline in performance', 'Somewhat worse — noticeable but manageable', 'About the same', 'I have just started noticing changes recently'],
-      },
-      {
-        id: 10, type: 'choice',
-        text: 'Would you be willing to follow a simple daily routine with a 100% natural method and no side effects?',
-        options: [
-          'Yes, absolutely — I am ready to start now',
-          'Depends on how much time it requires',
-          'Maybe, if it is easy to follow',
-          'I would prefer a faster solution',
-        ],
-      },
-      {
-        id: 11, type: 'yesno',
-        text: 'Would you like to have access to a natural treatment that can help restore your erectile function in as little as 3 weeks?',
-      },
-      {
-        id: 12, type: 'yesno',
-        text: 'If there was a proven natural method to fully recover your sexual performance within 21 days, would you be interested in learning about it?',
-      },
-      {
-        id: 13, type: 'yesno',
-        text: 'Would you like to get access to the full Testofy Protocol and start recovering your performance this very week?',
-      },
-    ];
 
-    const INTERMEDIATE_AFTER = 7;
+      // ── Q4 — Frequency (text adapts to severity) ──
+      q4: {
+        text: function() {
+          return sev() >= 2
+            ? 'How often does this happen when you want to be intimate?'
+            : 'How often do you experience difficulty getting or maintaining an erection?';
+        },
+        type: 'choice',
+        options: [
+          'Rarely — less than 25% of the time',
+          'Sometimes — around 50% of the time',
+          'Often — 75% or more of the time',
+          'Almost always — nearly every time'
+        ],
+        next: function() { return 'q5'; }
+      },
 
-    let currentStep = 0;
-    let stepHistory = [];
-    let showingMid  = false;
-    let answers     = {};
-    let advancing   = false;
+      // ── Q5 — Emotional / relationship impact (adapts to age) ──
+      q5: {
+        text: function() {
+          if (isYoung()) return 'Has this affected your confidence with partners or caused tension in your relationship?';
+          if (isSenior()) return 'Has this situation affected your self-esteem or your sense of masculinity?';
+          return 'Has erectile dysfunction affected your self-esteem, confidence or relationship?';
+        },
+        type: 'choice',
+        options: function() {
+          if (isYoung()) return [
+            "Yes — it's caused real strain in my relationship",
+            'Yes — I feel anxious and have started avoiding intimacy',
+            'Somewhat — it has crossed my mind a few times',
+            "Not yet — I'm acting before it gets worse"
+          ];
+          return [
+            'Yes — it has greatly impacted my life and confidence',
+            'Sometimes it causes anxiety and I avoid situations',
+            'Rarely — but I have noticed some impact',
+            'Not yet — but I want to address it before it gets worse'
+          ];
+        },
+        next: function() { return 'q6'; }
+      },
 
-    const container    = document.getElementById('quizContainer');
-    const progressArea = document.getElementById('progressArea');
-    const progressFill = document.getElementById('progressFill');
-    const progressLabel= document.getElementById('progressLabel');
-    const progressPct  = document.getElementById('progressPct');
-    const backBtn      = document.getElementById('backBtn');
+      // ── Q6 — Associated conditions → bifurcates Q7 ──
+      q6: {
+        text: 'Do you have any of the following?',
+        type: 'choice',
+        options: [
+          'Diabetes or high blood sugar',
+          'High blood pressure or cardiovascular issues',
+          'Chronic stress, anxiety or depression',
+          'None of the above'
+        ],
+        next: function() {
+          if (hasPhysical()) return 'q7a';
+          if (hasStress())   return 'q7b';
+          return 'q7c';
+        }
+      },
 
-    function updateProgress(qNumber) {
-      const pct = Math.round(((qNumber - 1) / QUESTIONS.length) * 100);
-      progressFill.style.width = pct + '%';
-      progressLabel.textContent = 'Question ' + qNumber + ' of ' + QUESTIONS.length;
+      // ── Q7a — Physical condition (diabetes / BP) ──
+      q7a: {
+        text: function() {
+          return cond() === 0
+            ? 'Are you currently managing your blood sugar with medication or insulin?'
+            : 'Are you currently on medication for blood pressure or heart health?';
+        },
+        type: 'choice',
+        options: [
+          'Yes — and I suspect it may be affecting my sexual function',
+          "Yes — but I haven't noticed a direct connection",
+          'No — I manage it through diet and lifestyle',
+          'No medication yet, but the condition is there'
+        ],
+        next: function() { return 'q8'; }
+      },
+
+      // ── Q7b — Stress / anxiety / depression ──
+      q7b: {
+        text: 'Do you notice your difficulties are worse during periods of high stress or low mood?',
+        type: 'choice',
+        options: [
+          "Yes — it's clearly worse when I'm stressed or anxious",
+          "Yes — but I can't tell if it's stress or something physical",
+          'Sometimes — but it also happens when I feel relaxed',
+          'Not really — it seems consistent regardless of my mood'
+        ],
+        next: function() { return 'q8'; }
+      },
+
+      // ── Q7c — No associated conditions (adapts to age) ──
+      q7c: {
+        text: function() {
+          return isSenior()
+            ? 'Do you still experience morning erections, or have they disappeared?'
+            : 'Have you noticed your morning erections becoming weaker or less frequent?';
+        },
+        type: 'choice',
+        options: function() {
+          return isSenior()
+            ? [
+              'No — morning erections have disappeared completely',
+              'Rarely — very weak when they do happen',
+              'Sometimes — but much weaker than before',
+              'Yes — I still get them fairly regularly'
+            ]
+            : [
+              "Yes — they're much weaker or have stopped altogether",
+              'A little weaker, but still present sometimes',
+              'About the same as always',
+              "I've never paid much attention to that"
+            ];
+        },
+        next: function() { return 'q8'; }
+      },
+
+      // ── Q8 — Libido (adapts to age + severity) ──
+      q8: {
+        text: function() {
+          if (isYoung())  return 'Have you also noticed a drop in sexual desire or drive along with the erection issues?';
+          if (isSenior()) return 'Along with erection difficulties — have you noticed a significant drop in sexual desire or overall energy?';
+          return 'Do you notice a significant drop in sexual desire or libido along with the erection difficulties?';
+        },
+        type: 'choice',
+        options: function() {
+          if (isSenior()) return [
+            'Yes — both desire and energy have dropped significantly',
+            'Mostly the erection — desire is still there',
+            'My desire has dropped a little',
+            'No — desire is normal, erection is the only issue'
+          ];
+          return [
+            'Yes — my libido has dropped significantly',
+            'Yes — but only moderately',
+            'Rarely — desire is mostly normal',
+            'No — desire is fine, erection is the only issue'
+          ];
+        },
+        next: function() { return 'q9'; }
+      },
+
+      // ── Q9 — Performance comparison (adapts to age) ──
+      q9: {
+        text: function() {
+          return isYoung()
+            ? 'How does your sexual performance compare to 1–2 years ago?'
+            : 'How does your sexual performance compare to 2–3 years ago?';
+        },
+        type: 'choice',
+        options: [
+          'Much worse — significant decline',
+          'Somewhat worse — noticeable but manageable',
+          "About the same — hasn't changed much",
+          'This is recent — I only just started noticing changes'
+        ],
+        next: function() { return 'q10'; }
+      },
+
+      // ── Q10 — Previous treatments → triggers mid message ──
+      q10: {
+        text: 'Have you ever tried any treatment for erectile dysfunction?',
+        type: 'choice',
+        options: [
+          'Yes — but without satisfactory results',
+          'Yes — but stopped due to side effects',
+          'Yes — with some partial improvement',
+          'No — this would be my first treatment'
+        ],
+        next: function() { return 'MID'; }
+      },
+
+      // ── Q11 — Adaptive opener (treatment history + age) ──
+      q11: {
+        text: function() {
+          if (prev() === 0) return isYoung()
+            ? "What if previous treatments didn't work because they weren't targeting the real root cause for someone your age? Would you be open to something more specific?"
+            : "Most generic treatments fail because they don't address your individual profile. What if there was a protocol tailored exactly to your situation? Would you try it?";
+          if (prev() === 1) return "What if you found a 100% natural protocol — no pharmaceutical side effects, no dependency — that actually delivered real results? Would you give it a chance?";
+          if (prev() === 2) return "What if you could build on those partial results with a complete, targeted protocol that takes you all the way to full recovery? Interested?";
+          return isSenior()
+            ? "If you could start a proven, natural protocol this week that could restore your sexual confidence in 3 weeks — would you take that chance?"
+            : "If you could start a completely natural, side-effect-free treatment this week and see real results in 3 weeks — would you give it a try?";
+        },
+        type: 'yesno',
+        next: function() { return 'q12'; }
+      },
+
+      // ── Q12 — Commitment (duration + severity + age) ──
+      q12: {
+        text: function() {
+          if (dur() >= 2 && sev() >= 2) return isYoung()
+            ? "Even though you've been dealing with this for a while — would you commit just a few minutes a day to get your confidence and performance back?"
+            : "Even after years of living with this — would you commit to a simple daily routine if it meant visible, lasting results in under a month?";
+          if (dur() >= 2) return "You've been managing this for a while. If a natural protocol could reverse it in 21 days — would you take that chance?";
+          if (isYoung()) return "You're catching this early — that's actually a huge advantage. Would you commit to a short daily routine to stop this before it gets worse?";
+          return "Would you be willing to dedicate just a few minutes a day to a natural protocol that could restore your full performance in under a month?";
+        },
+        type: 'yesno',
+        next: function() { return 'q13'; }
+      },
+
+      // ── Q13 — Final CTA (emotional impact + age) ──
+      q13: {
+        text: function() {
+          if (impact() <= 1 && isYoung()) return "Are you ready to take back your confidence and your intimate life — starting this week?";
+          if (impact() <= 1)              return "Are you ready to stop letting this control your confidence — and take real action starting today?";
+          if (isSenior())                 return "Are you ready to reclaim your sexual vitality and start the Testofy Protocol this week?";
+          return "Are you ready to take control and start recovering your performance this very week?";
+        },
+        type: 'yesno',
+        next: function() { return 'RESULT'; }
+      }
+    };
+
+    // ─────────────────────────────────────────────
+    //  DOM references
+    // ─────────────────────────────────────────────
+    var container     = document.getElementById('quizContainer');
+    var progressArea  = document.getElementById('progressArea');
+    var progressFill  = document.getElementById('progressFill');
+    var progressLabel = document.getElementById('progressLabel');
+    var progressPct   = document.getElementById('progressPct');
+    var backBtn       = document.getElementById('backBtn');
+
+    function resolve(val) { return typeof val === 'function' ? val() : val; }
+    function qNum()       { return qHistory.length + 1; }
+
+    function updateProgress() {
+      var n   = qNum();
+      var pct = Math.round(((n - 1) / TOTAL_Q) * 100);
+      progressFill.style.width  = pct + '%';
+      progressLabel.textContent = 'Question ' + n + ' of ' + TOTAL_Q;
       progressPct.textContent   = pct + '%';
     }
 
-    function showBack(visible) {
-      backBtn.classList.toggle('hidden', !visible);
-    }
+    function showBack(vis) { backBtn.classList.toggle('hidden', !vis); }
 
-    function renderQuestion(index) {
-      if (index < 0) return;
-      const q = QUESTIONS[index];
-      updateProgress(q.id);
-      showBack(stepHistory.length > 0);
+    // ─────────────────────────────────────────────
+    //  Render
+    // ─────────────────────────────────────────────
+    function renderQuestion(qId) {
+      var q    = Q[qId];
+      var text = resolve(q.text);
+      var num  = qNum();
+
+      updateProgress();
+      showBack(qHistory.length > 0);
       advancing = false;
 
       if (q.type === 'choice') {
-        container.innerHTML = `
-          <div class="card">
-            <div class="question-label">Question ${q.id} of ${QUESTIONS.length}</div>
-            <div class="question-text">${q.text}</div>
-            <div class="options" id="options"></div>
-          </div>`;
+        var opts = resolve(q.options);
+        container.innerHTML =
+          '<div class="card">' +
+            '<div class="question-label">Question ' + num + ' of ' + TOTAL_Q + '</div>' +
+            '<div class="question-text">' + text + '</div>' +
+            '<div class="options" id="options"></div>' +
+          '</div>';
 
-        const opts = document.getElementById('options');
-        q.options.forEach((opt, i) => {
-          const btn = document.createElement('button');
+        var optsEl = document.getElementById('options');
+        opts.forEach(function(opt, i) {
+          var btn = document.createElement('button');
           btn.className = 'option';
-          btn.innerHTML = `<div class="option-bullet"></div><span>${opt}</span>`;
-          btn.onclick = () => selectAndAdvance(btn, i, q.id);
-          opts.appendChild(btn);
+          if (A[qId] === i) btn.classList.add('selected');
+          btn.innerHTML = '<div class="option-bullet"></div><span>' + opt + '</span>';
+          btn.onclick   = function() { selectAndAdvance(btn, i, qId); };
+          optsEl.appendChild(btn);
         });
 
-        if (answers[q.id] !== undefined) {
-          const allOpts = document.querySelectorAll('.option');
-          if (allOpts[answers[q.id]]) allOpts[answers[q.id]].classList.add('selected');
-        }
       } else {
-        container.innerHTML = `
-          <div class="card">
-            <div class="question-label">Question ${q.id} of ${QUESTIONS.length}</div>
-            <div class="question-text">${q.text}</div>
-            <div class="yn-options">
-              <button class="yn-btn yes" onclick="handleYesNo('yes', ${q.id})">
-                <span class="yn-icon">&#x1F44D;</span>
-                Yes, I want that!
-              </button>
-              <button class="yn-btn no" onclick="handleYesNo('no', ${q.id})">
-                <span class="yn-icon">&#x274C;</span>
-                No
-              </button>
-            </div>
-          </div>`;
+        container.innerHTML =
+          '<div class="card">' +
+            '<div class="question-label">Question ' + num + ' of ' + TOTAL_Q + '</div>' +
+            '<div class="question-text">' + text + '</div>' +
+            '<div class="yn-options">' +
+              '<button class="yn-btn yes" onclick="handleYesNo(\'yes\',\'' + qId + '\')">' +
+                '<span class="yn-icon">&#x1F44D;</span>Yes, I want that!' +
+              '</button>' +
+              '<button class="yn-btn no" onclick="handleYesNo(\'no\',\'' + qId + '\')">' +
+                '<span class="yn-icon">&#x274C;</span>No' +
+              '</button>' +
+            '</div>' +
+          '</div>';
       }
     }
 
+    // ─────────────────────────────────────────────
+    //  Navigation
+    // ─────────────────────────────────────────────
     function selectAndAdvance(btn, idx, qId) {
       if (advancing) return;
       advancing = true;
-
-      document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+      document.querySelectorAll('.option').forEach(function(o) { o.classList.remove('selected'); });
       btn.classList.add('selected');
-      answers[qId] = idx;
+      A[qId] = idx;
 
-      setTimeout(() => {
-        stepHistory.push({ step: currentStep, wasMid: false });
-        currentStep++;
-        if (currentStep === INTERMEDIATE_AFTER) {
-          showMidMessage();
-        } else {
-          renderQuestion(currentStep);
-        }
+      setTimeout(function() {
+        var nextId = Q[qId].next();
+        qHistory.push(currentQId);
+        currentQId = nextId;
+        if (nextId === 'MID') showMidMessage();
+        else renderQuestion(nextId);
       }, 320);
     }
 
     function handleYesNo(val, qId) {
       if (advancing) return;
       advancing = true;
-      answers[qId] = val;
+      A[qId] = (val === 'yes') ? 0 : 1;
+      var sel = document.querySelector('.yn-btn.' + (val === 'yes' ? 'yes' : 'no'));
+      if (sel) sel.classList.add('selected');
 
-      const btn = document.querySelector('.yn-btn.' + (val === 'yes' ? 'yes' : 'no'));
-      if (btn) btn.classList.add('selected');
-
-      setTimeout(() => {
-        stepHistory.push({ step: currentStep, wasMid: false });
-        currentStep++;
-        if (currentStep >= QUESTIONS.length) {
-          showResult();
-        } else {
-          renderQuestion(currentStep);
-        }
+      setTimeout(function() {
+        var nextId = Q[qId].next();
+        qHistory.push(currentQId);
+        currentQId = nextId;
+        if (nextId === 'RESULT') showResult();
+        else renderQuestion(nextId);
       }, 300);
     }
 
+    function goBack() {
+      if (qHistory.length === 0) return;
+      var prevId = qHistory.pop();
+      currentQId = prevId;
+      if (prevId === 'MID') { showMidMessage(); return; }
+      progressArea.style.display = 'block';
+      renderQuestion(prevId);
+    }
+
+    // ─────────────────────────────────────────────
+    //  Mid message — adaptive
+    // ─────────────────────────────────────────────
     function showMidMessage() {
       progressArea.style.display = 'none';
       showBack(false);
       advancing = false;
-      container.innerHTML = `
-        <div class="mid-card">
-          <div class="mid-icon">&#x26A1;</div>
-          <div class="mid-badge">Analysis Almost Complete</div>
-          <div class="mid-title">Your situation <span>can be reversed!</span></div>
-          <p class="mid-body">
-            Based on your answers, your profile is highly compatible with natural recovery
-            of erectile function. The good news — this type of dysfunction can often be
-            resolved at the root cause with the right approach, even if previous attempts
-            have failed.
-          </p>
-          <div class="mid-highlights">
-            <div class="mid-highlight-item"><div class="dot"></div>Erectile dysfunction with an identifiable and treatable cause</div>
-            <div class="mid-highlight-item"><div class="dot"></div>Profile compatible with fast hormonal and vascular recovery</div>
-            <div class="mid-highlight-item"><div class="dot"></div>High chance of visible results within 3 weeks</div>
-          </div>
-          <button class="btn-continue" onclick="continueMid()">Continue &rarr;</button>
-        </div>`;
+
+      var titleInner, body, h1, h3;
+
+      if (hasPhysical()) {
+        titleInner = sev() >= 2
+          ? 'a clear vascular cause — and that is actually good news'
+          : 'a physical root cause that is highly treatable';
+        body = cond() === 0
+          ? "Blood sugar imbalances are one of the most well-documented — and most reversible — causes of erectile dysfunction. Targeting this connection with the right natural protocol can produce dramatic results, even when medications alone have fallen short."
+          : "Cardiovascular health and erectile function are deeply linked. The good news is that improving blood flow and vascular health through the right natural protocol can restore your performance faster than most men expect.";
+        h1 = prev() === 0
+          ? 'Root cause identified — previous treatments missed the vascular connection'
+          : 'Physical cause identified — highly responsive to natural treatment';
+      } else if (hasStress()) {
+        titleInner = 'a psychological root cause — the most reversible type';
+        body = "Stress and anxiety are the leading cause of ED in men under 45 — and also the most treatable. When the nervous system is in a state of chronic stress, it actively suppresses the hormones needed for sexual function. The right natural protocol resets this cycle at the source.";
+        h1 = prev() === 0
+          ? 'Root cause identified — previous treatments missed the hormonal-stress connection'
+          : 'Psychological component identified — responds very well to natural hormone regulation';
+      } else {
+        titleInner = isSenior()
+          ? 'a hormonal pattern common after 40 — and fully reversible'
+          : 'strong recovery potential — your body can respond quickly';
+        body = isSenior()
+          ? "After 40, testosterone and nitric oxide levels naturally decline — but this process is not irreversible. Men with a profile like yours consistently respond well to protocols that target these specific deficiencies at the root."
+          : "With no underlying conditions, your case is driven by a hormonal or lifestyle imbalance that responds extremely well to targeted natural intervention. This is one of the most recoverable profiles we see.";
+        h1 = prev() === 0
+          ? 'Root cause now identified — previous treatments were too generic'
+          : 'Hormonal profile with a clear, addressable cause';
+      }
+
+      h3 = dur() >= 2
+        ? 'Recovery possible even after extended erectile difficulties'
+        : 'High likelihood of visible results within 3 weeks';
+
+      container.innerHTML =
+        '<div class="mid-card">' +
+          '<div class="mid-icon">&#x26A1;</div>' +
+          '<div class="mid-badge">Analysis Almost Complete</div>' +
+          '<div class="mid-title">Your profile shows <span>' + titleInner + '</span></div>' +
+          '<p class="mid-body">' + body + '</p>' +
+          '<div class="mid-highlights">' +
+            '<div class="mid-highlight-item"><div class="dot"></div>' + h1 + '</div>' +
+            '<div class="mid-highlight-item"><div class="dot"></div>Profile compatible with fast hormonal and vascular recovery</div>' +
+            '<div class="mid-highlight-item"><div class="dot"></div>' + h3 + '</div>' +
+          '</div>' +
+          '<button class="btn-continue" onclick="continueMid()">See your personalized protocol &rarr;</button>' +
+        '</div>';
     }
 
     function continueMid() {
-      stepHistory.push({ step: null, wasMid: true });
+      qHistory.push('MID');
+      currentQId = 'q11';
       progressArea.style.display = 'block';
-      renderQuestion(currentStep);
+      renderQuestion('q11');
     }
 
-    function goBack() {
-      if (stepHistory.length === 0) return;
-      const prev = stepHistory.pop();
-
-      if (prev.wasMid) {
-        currentStep = INTERMEDIATE_AFTER;
-        progressArea.style.display = 'none';
-        showBack(false);
-        advancing = false;
-        container.innerHTML = `
-          <div class="mid-card">
-            <div class="mid-icon">&#x26A1;</div>
-            <div class="mid-badge">Analysis Almost Complete</div>
-            <div class="mid-title">Your situation <span>can be reversed!</span></div>
-            <p class="mid-body">
-              Based on your answers, your profile is highly compatible with natural recovery
-              of erectile function. The good news — this type of dysfunction can often be
-              resolved at the root cause with the right approach, even if previous attempts
-              have failed.
-            </p>
-            <div class="mid-highlights">
-              <div class="mid-highlight-item"><div class="dot"></div>Erectile dysfunction with an identifiable and treatable cause</div>
-              <div class="mid-highlight-item"><div class="dot"></div>Profile compatible with fast hormonal and vascular recovery</div>
-              <div class="mid-highlight-item"><div class="dot"></div>High chance of visible results within 3 weeks</div>
-            </div>
-            <button class="btn-continue" onclick="continueMid()">Continue &rarr;</button>
-          </div>`;
-        return;
-      }
-
-      currentStep = prev.step;
-      progressArea.style.display = 'block';
-      renderQuestion(currentStep);
-    }
-
+    // ─────────────────────────────────────────────
+    //  Result — adaptive
+    // ─────────────────────────────────────────────
     function showResult() {
       progressArea.style.display = 'none';
       showBack(false);
-      container.innerHTML = `
-        <div class="result-card">
-          <div class="result-icon">&#x1F3C6;</div>
-          <div class="result-badge">You Are an Ideal Candidate</div>
-          <div class="result-title">Your performance <span>can be fully restored</span> in as little as 3 weeks</div>
-          <p class="result-body">
-            Congratulations on completing the assessment! Based on your profile, the Testofy Protocol
-            is designed to reactivate your body's natural testosterone production, improve blood flow,
-            and restore erectile function at the root. Our method is 100% natural, with no side effects
-            — and most users report visible results in under 30 days.
-          </p>
-          <div class="result-features">
-            <div class="result-feature"><span class="f-icon">&#x1F33F;</span>100% Natural</div>
-            <div class="result-feature"><span class="f-icon">&#x23F1;</span>Results in 3 weeks</div>
-            <div class="result-feature"><span class="f-icon">&#x1F525;</span>Boosts Testosterone</div>
-            <div class="result-feature"><span class="f-icon">&#x2705;</span>No side effects</div>
-          </div>
-          <button class="btn-cta" onclick="handleCTA()">
-            Get the full Testofy Protocol now &rarr;
-          </button>
-          <p class="cta-sub">Limited access &bull; Secure checkout &bull; Results in 3 weeks</p>
-        </div>`;
+
+      var title, body;
+
+      if (isYoung() && impact() <= 1) {
+        title = 'Your performance <span>can be fully restored</span> — and your confidence with it';
+        body  = "Congratulations on completing the assessment! Men your age with a profile like yours have one of the strongest recovery rates of any group. The Testofy Protocol is designed to target the exact hormonal and lifestyle triggers that cause ED in younger men — 100% natural, no side effects, and most users see results in under 3 weeks.";
+      } else if (isSenior() && sev() >= 2) {
+        title = "It's not too late — your performance <span>can be fully restored</span>";
+        body  = "Congratulations on completing the assessment! Men in their 40s and 50s routinely restore full erectile function with the right protocol — even after years of difficulties. The Testofy Protocol targets testosterone, blood flow and nitric oxide production at the root. 100% natural, with no side effects, and most users report visible improvement in under 30 days.";
+      } else {
+        title = 'Your performance <span>can be fully restored</span> in as little as 3 weeks';
+        body  = "Congratulations on completing the assessment! Based on your profile, the Testofy Protocol is designed to reactivate your body's natural testosterone production, improve blood flow, and restore erectile function at the root. Our method is 100% natural, with no side effects — and most users report visible results in under 30 days.";
+      }
+
+      container.innerHTML =
+        '<div class="result-card">' +
+          '<div class="result-icon">&#x1F3C6;</div>' +
+          '<div class="result-badge">You Are an Ideal Candidate</div>' +
+          '<div class="result-title">' + title + '</div>' +
+          '<p class="result-body">' + body + '</p>' +
+          '<div class="result-features">' +
+            '<div class="result-feature"><span class="f-icon">&#x1F33F;</span>100% Natural</div>' +
+            '<div class="result-feature"><span class="f-icon">&#x23F1;</span>Results in 3 weeks</div>' +
+            '<div class="result-feature"><span class="f-icon">&#x1F525;</span>Boosts Testosterone</div>' +
+            '<div class="result-feature"><span class="f-icon">&#x2705;</span>No side effects</div>' +
+          '</div>' +
+          '<button class="btn-cta" onclick="handleCTA()">Get the full Testofy Protocol now &rarr;</button>' +
+          '<p class="cta-sub">Limited access &bull; Secure checkout &bull; Results in 3 weeks</p>' +
+        '</div>';
     }
 
     function handleCTA() {
-      window.location.href = 'https://pay.hotmart.com/B104929784U?checkoutMode=10';
+      window.location.href = CHECKOUT;
     }
 
     // ── INIT ──
-    renderQuestion(0);
+    renderQuestion('q1');
 
     // ── BACK BUTTON REDIRECT ──
     history.pushState(null, '', location.href);
     window.addEventListener('popstate', function() {
       history.pushState(null, '', location.href);
-      window.location.replace('https://pay.hotmart.com/B104929784U?checkoutMode=10&bid=1779406755655');
+      window.location.replace(CHECKOUT);
     });
   </script>
 </body>
